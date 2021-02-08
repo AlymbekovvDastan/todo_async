@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.post('/sign-up', response_model=User)
-async def create_user(user: UserCreate):
+async def sign_up(user: UserCreate):
     db_user = await get_user_by_email(email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail='Email already registered')
@@ -23,9 +23,9 @@ async def auth(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=400, detail='Неправильный адрес электронной почты или пароль')
     if not verify_password(form_data.password, user['password']):
         raise HTTPException(status_code=400, detail='Непрвавильный адрес или электронной пчты или пароль')
-    return create_token(user['id'])
+    return await create_token(user['id'])
 
 
-@router.get('/users/me', response_model=UserBase)
+@router.get('/me', response_model=UserBase)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
