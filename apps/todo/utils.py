@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import select, desc
 
 from apps.todo.models import todos_table, status_table
-from apps.todo.schemas import TodoCreate
+from apps.todo.schemas import TodoCreate, StatusBase
 from db.database import database
 
 
@@ -50,3 +50,28 @@ async def get_todos(user):
         .oredr_by(desc(todos_table.c.created_at))
     )
     return await database.fetch_all(query)
+
+
+async def create_status(status: StatusBase):
+    query = status_table.insert().values(**status.dict()).returning(status_table.c.id, status_table.c.name)
+    return await database.fetch_one(query)
+
+
+async def update_status(status_id, status: StatusBase):
+    query = status_table.update().where(
+        status_table.c.id == status_id
+    ).values(**status.dict()).returning(status_table.c.id, status_table.c.name)
+    return await database.fetch_one(query)
+
+
+async def get_status():
+    query = (
+        select([status_table.c.id, status_table.c.name])
+        .select_from(status_table)
+    )
+    return await database.fetch_all(query)
+
+
+async def delete_status(status_id: int):
+    query = status_table.delete().where(status_table.c.id == status_id)
+    return await database.execute(query)

@@ -15,3 +15,11 @@ class TodoCreate(TodoBase):
 class Todo(TodoCreate):
     id: int
     created_at: datetime
+
+
+class StatusBase(BaseModel):
+    name: str
+
+
+class Status(StatusBase):
+    id: int

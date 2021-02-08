@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from apps.user.dependecies import get_current_user
@@ -8,7 +8,7 @@ from apps.user.utils import get_user_by_email, create_user, verify_password, cre
 router = APIRouter()
 
 
-@router.post('/sign-up', response_model=User)
+@router.post('/sign-up', response_model=User, status_code=status.HTTP_201_CREATED)
 async def sign_up(user: UserCreate):
     db_user = await get_user_by_email(email=user.email)
     if db_user:
