@@ -7,6 +7,11 @@ from apps.todo.schemas import TodoCreate, StatusBase
 from db.database import database
 
 
+async def get_one_status(status_id: int):
+    query = status_table.select().where(status_table.c.id == status_id)
+    return await database.fetch_one(query)
+
+
 async def create_todo(todo: TodoCreate, user):
     query = (
         todos_table.insert().values(
@@ -15,14 +20,12 @@ async def create_todo(todo: TodoCreate, user):
         ).returning(
             todos_table.c.id,
             todos_table.c.text,
-            todos_table.c.created_at,
+            todos_table.c.date_to,
+            todos_table.c.status_id
         )
     )
-
     todo = await database.fetch_one(query)
-    todo = dict(zip(todo, todo.values()))
-    todo['user_name'] = user['name']
-    return todo
+    return dict(todo)
 
 
 async def update_todo(todo_id: int, todo: TodoCreate):
@@ -30,7 +33,19 @@ async def update_todo(todo_id: int, todo: TodoCreate):
         todos_table.update()
         .where(todos_table.c.id == todo_id)
         .values(**todo.dict())
+        .returning(
+            todos_table.c.id,
+            todos_table.c.text,
+            todos_table.c.date_to,
+            todos_table.c.status_id
+        )
     )
+    todo = await database.fetch_one(query)
+    return dict(todo)
+
+
+async def delete_todo(todo_id: int):
+    query = todos_table.delete().where(todos_table.c.id == todo_id)
     return await database.execute(query)
 
 
@@ -41,13 +56,11 @@ async def get_todos(user):
             todos_table.c.text,
             todos_table.c.created_at,
             todos_table.c.date_to,
-            todos_table.c.status_id,
             status_table.c.name.label('status'),
         ]
         )
         .where(todos_table.c.user_id == user['id'])
         .select_from(todos_table.join(status_table))
-        .oredr_by(desc(todos_table.c.created_at))
     )
     return await database.fetch_all(query)
 
